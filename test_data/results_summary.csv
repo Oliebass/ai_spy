@@ -1,0 +1,8 @@
+label,data_type,n_detections
+vehicle,img,32
+person,img,28
+cat,img,22
+dog,img,21
+micromammal,img,5
+fox,img,1
+lagomorph,img,1
