@@ -16,7 +16,7 @@ start <- function(){
   counter <- 0
   
   while(!input %in% names(options) & counter < 3){
-    if(counter > 1){
+    if(counter >= 1){
       message('Choice not recognised.\nPlease try again')
     }
     
