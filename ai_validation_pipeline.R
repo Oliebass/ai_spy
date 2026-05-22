@@ -5,13 +5,14 @@ source('/Users/oliverhartley/Desktop/RScripts/ai_workflow_functions.R')
 start()
 
 # demo renaming
-dta_files <- read.csv("data/logs/ai_files/processed_2026-05-06/results_files.csv", header = TRUE)
+dta_files <- read.csv("Incoming Images/results_files.csv", header = TRUE)
 dta_files$absolute_path <- paste0(getwd(),'/', 'Incoming Images')
-write.csv(dta_files, "data/logs/ai_files/processed_2026-05-06/results_files.csv", row.names = FALSE)
+write.csv(dta_files, "Incoming Images/results_files.csv", row.names = FALSE)
 
-dta_det <- read.csv("data/logs/ai_files/processed_2026-05-06/results_detections.csv", header = TRUE)
+dta_det <- read.csv("Incoming Images/results_detections.csv", header = TRUE)
 dta_det$absolute_path <- paste0(getwd(),'/', 'Incoming Images')
-write.csv(dta_det, "data/logs/ai_files/processed_2026-05-06/results_detections.csv", row.names = FALSE)
+write.csv(dta_det, "Incoming Images/results_detections.csv", row.names = FALSE)
+
 
 
 # Step 1: ---------------------------------------------------------------------
