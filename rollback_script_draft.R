@@ -33,7 +33,7 @@ message('Backup process completed.\n')
 
 
 # Step 2: Load required database ####
-message('Rollback initiated.')
+message('Rollback initiated.\n')
 
 recorded_image <- current_validations$validation_file_path
 images <- path_abs(dir_ls('To Validate', recurse = TRUE, type = 'file', glob = '*.JPG|*.MP4'))
