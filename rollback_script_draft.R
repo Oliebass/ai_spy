@@ -40,10 +40,11 @@ images <- path_abs(dir_ls('To Validate', recurse = TRUE, type = 'file', glob = '
 uncatalogged_images <- images[!images %in% recorded_image]
 
 if(length(uncatalogged_images) > 0){
-  message(length(uncatalogged_images), ' uncatalogged images detected. Would you like to proceed with rollback?\nn/Y')
+  message(length(uncatalogged_images), ' uncatalogged images detected. Would you like to proceed with rollback?\n\n NOTE: You will be asked at each species to confirm if what is to be deleted appears to be correct.\nn/Y')
   input <- tolower(readline())
   if(input == 'y' | input == 'yes'){
     ## Script to remove directories
+    confirmation_tracker <- NULL
     for(species_dir in dir_ls('To Validate', type = 'directory')){
       # Fix 1: update the csv's
       message('Removing additional detections in: \n\t', paste(species_dir, 'human_validation.csv', sep = '/'))
@@ -52,26 +53,48 @@ if(length(uncatalogged_images) > 0){
       incorrect_table$file_path <- paste(path_abs(species_dir), incorrect_table$image, sep = '/')
       corrected_table <- incorrect_table[incorrect_table$file_path %in% current_validations$validation_file_path,]
       
-      write.csv(corrected_table %>% 
-                  select(!file_path), paste(species_dir, 'human_validation.csv', sep = '/'), row.names = FALSE)
-      message('\t', paste(species_dir, 'human_validation.csv', sep = '/'), ' updated and corrected.')
+      message('Does the following seem correct? If so, rollback will happen for this species.\n n/Y')
+      message(basename(species_dir), '\nTracked entries: ', nrow(corrected_table), '\nUntracked entries: ', nrow(incorrect_table)-nrow(corrected_table))
       
-      # Fix 2: remove the excess images
-      message('\tRemoving unlogged images from ', species_dir)
-      image_list <- path_abs(dir_ls(species_dir, recurse = TRUE, type = 'file', glob = '*.JPG|*.MP4'))
-      extra_images <- image_list[!image_list %in% corrected_table$file_path]
+      del_confirm <- tolower(readline())
+      if(del_confirm == 'y' | del_confirm == 'yes'){
+        message(basename(species_dir), ' rollback confirmed')
+          write.csv(corrected_table %>% 
+                      select(!file_path), paste(species_dir, 'human_validation.csv', sep = '/'), row.names = FALSE)
+          message('\t', paste(species_dir, 'human_validation.csv', sep = '/'), ' updated and corrected.')
+          
+          # Fix 2: remove the excess images
+          message('\tRemoving unlogged images from ', species_dir)
+          image_list <- path_abs(dir_ls(species_dir, recurse = TRUE, type = 'file', glob = '*.JPG|*.MP4'))
+          extra_images <- image_list[!image_list %in% corrected_table$file_path]
+          
+          #corrections <- append(corrections, extra_images)
+          
+          file_delete(extra_images)
+          
+          message('\t', length(extra_images), ' images removed.')
+      } else if(del_confirm == 'n' | del_confirm == 'no') {
+        message('Incorrect rollback numbers confirmed. "', basename(species_dir), '" rollback will be skipped.\nSkipped file record will be saved in "data/backups/skipped_confirmations.csv"')
+        skipped_confirmation <- data.frame(untracked_skipped_images =  incorrect_table$file_path[!incorrect_table$file_path %in% current_validations$validation_file_path])
+        confirmation_tracker <- rbind(confirmation_tracker, skipped_confirmation)
+      } else {
+        message('Input not recognised. "', basename(species_dir), '" rollback will be skipped.\nSkipped file record will be saved in "data/backups/skipped_confirmations.csv"')
+        skipped_confirmation <- data.frame(untracked_skipped_images =  incorrect_table$file_path[!incorrect_table$file_path %in% current_validations$validation_file_path])
+        confirmation_tracker <- rbind(confirmation_tracker, skipped_confirmation)
+      }
+    }
       
-      #corrections <- append(corrections, extra_images)
-      
-      file_delete(extra_images)
-      
-      message('\t', length(extra_images), ' images removed.')
+      if(is.null(confirmation_tracker)){
+        message('Rollback successful.')
+      } else {
+        message('Rollback partially successful.')
+        message('Saving "data/backups/skipped_confirmations.csv"')
+        write.csv(confirmation_tracker, 'data/backups/skipped_confirmations.csv', row.names = FALSE)
       }
       
-      message('Rollback successful.')
-      message('Removing rollback backup files.')
-      
+      message('Removing temporary rollback backup files.')
       dir_delete('data/backups/temp_rollback')
+      
       message('Backup removed successfully.')
       message('Rollback process completed')
       
